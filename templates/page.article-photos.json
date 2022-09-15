@@ -1,0 +1,38 @@
+{
+    "sections": {
+      "main": {
+        "type": "page-content__main",
+        "disabled": true,
+        "settings": {
+          "show_heading": true,
+          "heading_alignment": "left",
+          "width": "standard",
+          "padding_top": 40,
+          "padding_bottom": 40,
+          "css_class": "",
+          "custom_css": ""
+        }
+      },
+      "1659114858020bd342": {
+        "type": "page__article-photos",
+        "settings": {
+          "blog_widget_select": "blog",
+          "text-color": "",
+          "photos-background-color": "#bfb6c5",
+          "articles-per-page": 99,
+          "width": "standard",
+          "padding_top": 20,
+          "padding_bottom": 0,
+          "padding_left": 0,
+          "padding_right": 0,
+          "animation": "none",
+          "css_class": "",
+          "custom_css": ""
+        }
+      }
+    },
+    "order": [
+      "main",
+      "1659114858020bd342"
+    ]
+  }
