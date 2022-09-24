@@ -2,7 +2,7 @@
 
 Code created by JadePuma
 Instructions - https://jadepuma.com/blogs/shopify-tutorials/article-image-review-tool-for-the-flex-theme
-Last editted - 14Sep22
+Last editted - 24Sep22
  
 {% endcomment %}
 
@@ -88,7 +88,7 @@ id: id
    
       <div class="product-photos">
 
-        {% paginate blog.articles by {{ settings.section.articles-per-page }} %}
+        {% paginate blog.articles by 99 %}
 
   {% for article in blog.articles %}
         <h3><a href="/admin/articles/{{article.id}}" target="_blank">{{article.title}}</a></h3>
@@ -145,14 +145,6 @@ id: id
 "type": "color",
 "id": "photos-background-color",
 "label": "Background"
-},
-{
-"type": "range",
-"id": "articles-per-page",
-"label": "Articles per page",
-"min": 20,
-"max": 99,
-"default": 50
 },
 {
 "type": "header",
