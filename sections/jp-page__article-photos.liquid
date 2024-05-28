@@ -1,272 +1,320 @@
 {% comment %}
-
-Code created by JadePuma
-Instructions - https://jadepuma.com/blogs/shopify-tutorials/article-image-review-tool-for-the-flex-theme
-Last editted - 26Jan24
- 
+  Code created by JadePuma
+  Instructions - https://jadepuma.com/blogs/shopify-tutorials/article-image-review-tool-for-the-flex-theme
+  Last editted - 26Jan24
 {% endcomment %}
 
-{%- assign id = section.id -%}
+{% liquid
+    assign id = section.id
+    assign ss = section.settings
+    assign target-aspect-ratio = ss.target-aspect-ratio | times: 1 |  round: 3
+    assign instructions-too-tall = ss.instructions-too-tall
+    assign instructions-too-wide = ss.instructions-too-wide
+    assign pagination_limit = ss.pagination_limit
+    assign text_color = ss.text_color
+    assign photos_background_color = ss.photos_background_color
+%}
 
 {% comment %} Section specific CSS {% endcomment %}
 {%- capture section_css -%}
 
-.photos { display: flex; flex-direction: row; padding: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.photos { display: flex; flex-direction: row; padding: 10px; flex-wrap: wrap; margin-bottom: 60px; background-color:{{ photos_background_color }}; }
 .photo { display: flex; flex-direction: column; margin: 10px; }
 .photo div { color: {{ section.settings.text-color }}; }
 
 {%- endcapture -%}
 
 {% style %}
-#shopify-section-{{ id }} {
-padding-top: {{ section.settings.padding_top }}px;
-padding-bottom: {{ section.settings.padding_bottom }}px;
-padding-left: {{ section.settings.padding_left }}px;
-padding-right: {{ section.settings.padding_right }}px;
-{% if section.settings.width == 'wide' %}
-width: 100%;
-{% elsif section.settings.width == 'half' %}
-width: 50%;
-{% endif %}
-}
+  #shopify-section-{{ id }} {
+  /* padding-top: {{ section.settings.padding_top }}px;
+  padding-bottom: {{ section.settings.padding_bottom }}px;
+  padding-left: {{ section.settings.padding_left }}px;
+  padding-right: {{ section.settings.padding_right }}px; */
+  {% if section.settings.width == 'wide' %}
+  width: 100%;
+  {% elsif section.settings.width == 'half' %}
+  width: 50%;
+  {% endif %}
+  }
 
-  .no-photo { color: red; font-size: 38px; }
-  .pagination-list li::marker { display: none; color: white; }
-  .photo { padding: 30px;
-          background-color: {{ section.settings.photos-background-color }};    
-          display: flex;
-   flex-direction: row;
-   align-items: center;
-   justify-content: center;}
+    .no-photo { color: red; font-size: 38px; }
+    .pagination-list li::marker { display: none; color: white; }
+    .photo { padding: 30px;
+            background-color: {{ section.settings.photos-background-color }};
+            display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;}
 
-{%
-    render 'css-loop',
-css: section_css,
-id: id
-%}
+     .aspect-ratio-good { background-color: #c3f6c3; }
+    .aspect-ratio-bad { background-color: #f6c3dd; }
 
-{%
-    render 'css-loop',
-css: section.settings.custom_css,
-id: id
-%}
+  .article-title, .article-photos-container h1 {
+    color:{{ text_color }} !important;
+  }
 
+  {%
+      render 'css-loop',
+    css: section_css,
+    id: id
+  %}
+
+  {%
+      render 'css-loop',
+    css: section.settings.custom_css,
+    id: id
+  %}
 {% endstyle %}
 
 {% comment %} HTML markup {% endcomment %}
-<section class="featured-video
-                section
-                {{ section.settings.css_class }}
-                is-width-{{ section.settings.width }}
-                {% if section.settings.mobile_text_below_video == true %}
-                mobile-text--below-media
-                {% else %}
-                mobile-text--over-media
-                {% endif %}
-                {% if video_exists %} has-video-added {% endif %}
-                video-controls-enabled--{{ section.settings.controls }}"
-         {% if section.settings.animation != "none" %}
-         data-scroll-class="{{ section.settings.animation }}"
-         {% endif %}>
-  <div class="container
-              video__container
-              {% if section.settings.width == 'wide' or section.settings.width == 'half' %}
-              equal-columns--outside-trim
-              {% endif %}">
-    <div class="one-whole column content">
-
+<section
+  class="
+    featured-video
+    section
+    {{ section.settings.css_class }}
+    is-width-{{ section.settings.width }}
+    {% if section.settings.mobile_text_below_video == true %}
+    mobile-text--below-media
+    {% else %}
+    mobile-text--over-media
+    {% endif %}
+    {% if video_exists %} has-video-added {% endif %}
+    video-controls-enabled--{{ section.settings.controls }}
+    has-padding-top
+    has-padding-bottom
+  "
+>
+  <div
+    class="
+      container
+      video__container
+      {% if section.settings.width == 'wide' or section.settings.width == 'half' %}
+      equal-columns--outside-trim
+      {% endif %}
+      
+    "
+  >
+    <div class="one-whole column content article-photos-container">
       {% render 'heading',
-              title: page.title,
-      heading_tag: 'h1',
-      context: 'page',
-      text_alignment: section.settings.heading_alignment
+        title: page.title,
+        heading_tag: 'h1',
+        context: 'page',
+        text_alignment: section.settings.heading_alignment
       %}
+      <h2 class="article-title">Desired Aspect Ratio - {{ target-aspect-ratio }}</h2>
+
 
       {%- assign blog = blogs[section.settings.blog_widget_select] -%}
 
-      <h2>Blog - {{ blog.title }}</h2>
-   
+      <h2 class="article-title">Blog - {{ blog.title }}</h2>
+
       <div class="product-photos">
+        {% paginate blog.articles by pagination_limit %}
+          {% for article in blog.articles %}
+            {% assign aspect-ratio = article.image.aspect_ratio | times: 1 | round: 3 %}
+            <div>
+              <h3>
+                <a class="article-title" href="/admin/articles/{{article.id}}" target="_blank">{{ article.title }}</a>
+              </h3>
+              <div class="photos">
+                <div class="photo {% if aspect-ratio == target-aspect-ratio %}aspect-ratio-good{% else %}aspect-ratio-bad{% endif %}">
+                  <div><img src="{{ article.image.src | img_url: '500x' }}"></div>
+                  <div>Dimensions: {{ article.image.height }}px X {{ article.image.width }}px</div>
+                  <div>Aspect Ratio: {{ aspect-ratio }}</div>
+                  {% if aspect-ratio > target-aspect-ratio %}
+                    <p>{{ section.settings.instructions-too-wide }}</p>
+                  {%  elsif aspect-ratio < target-aspect-ratio %}
+                    <p>{{ section.settings.instructions-too-tall }}</p>
+                    {% endif %}
+              </div>    
+            </div>
+          {% endfor %}
 
-        {% paginate blog.articles by 99 %}
-
-  {% for article in blog.articles %}
-        <h3><a href="/admin/articles/{{article.id}}" target="_blank">{{article.title}}</a></h3>
-        <div class="photos">
-          <div class="photo">
-            <div><img src="{{ article.image.src | img_url: '500x' }}"></div>
-            <div>Dimensions: {{ article.image.height }}px X {{ article.image.width }}px</div>
-            <div>Aspect Ratio: {{ article.image.aspect_ratio | round: 2 }}</div>
+          <div class="container container--pagination">
+            <div class="one-whole column text-align-center">
+              {%- assign load_more_text = 'blogs.by-flandb.articles.general.pagination_button' | t -%}
+              {% render 'pagination',
+                paginate: paginate,
+                pagination_type: basic_pagination,
+                load_more_text: load_more_text
+              %}
+            </div>
           </div>
-        </div>
-        {% endfor %}        
-
-        <div class="container container--pagination">
-          <div class="one-whole column text-align-center">
-            {%- assign load_more_text = 'blogs.by-flandb.articles.general.pagination_button' | t -%}
-            {% render 'pagination',
-                  paginate: paginate,
-                  pagination_type: basic_pagination,
-                  load_more_text: load_more_text
-            %}
-          </div>
-        </div>    
-
-        {% endpaginate %}
-
-      </div> 
-
+        {% endpaginate %} 
+      </div>
     </div>
   </div>
-
 </section>
 
-
 {% schema %}
+{
+  "name": "JP Article photos",
+  "class": "product-photos-section overlaid-header-option",
+  "settings": [
     {
-    "name": "JP Article photos",
-    "class": "product-photos-section overlaid-header-option",
-    "settings": [
-    {
-    "type": "header",
-    "content": "Settings"
+      "type": "header",
+      "content": "Settings"
     },
     {
       "type": "blog",
       "id": "blog_widget_select",
       "label": "Blog"
-    },  
-{
-"type": "color",
-"id": "text-color",
-"label": "Text"
-},
-{
-"type": "color",
-"id": "photos-background-color",
-"label": "Background"
-},
-{
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text"
+    },
+    {
+      "type": "color",
+      "id": "photos_background_color",
+      "label": "Background"
+    },
+    {
 "type": "header",
-"content": "Layout"
+"content": "Photos"
 },
 {
-"type": "select",
-"id": "width",
-"label": "Width",
-"default": "wide",
-"options": [
-{
-"value": "half",
-"label": "Half"
-},
-{
-"value": "standard",
-"label": "Standard"
-},
-{
-"value": "wide",
-"label": "Wide"
-}
-]
-},
-{
-"type": "range",
-"id": "padding_top",
-"label": "Top spacing",
-"min": 0,
-"max": 80,
-"default": 20,
-"unit": "px"
-},
-{
-"type": "range",
-"id": "padding_bottom",
-"label": "Bottom spacing",
-"min": 0,
-"max": 80,
-"default": 0,
-"unit": "px"
-},
-{
-"type": "range",
-"id": "padding_left",
-"label": "Left spacing",
-"min": 0,
-"max": 80,
-"default": 0,
-"unit": "px"
-},
-{
-"type": "range",
-"id": "padding_right",
-"label": "Right spacing",
-"default": 0,
-"min": 0,
-"max": 80,
-"unit": "px"
-},
-{
-"type": "select",
-"id": "animation",
-"label": "Animation",
-"default": "none",
-"options": [
-{
-"value": "none",
-"label": "None"
-},
-{
-"value": "fadeIn",
-"label": "Fade in"
-},
-{
-"value": "fadeInDown",
-"label": "Fade in down"
-},
-{
-"value": "fadeInLeft",
-"label": "Fade in left"
-},
-{
-"value": "fadeInRight",
-"label": "Fade in right"
-},
-{
-"value": "slideInLeft",
-"label": "Slide in left"
-},
-{
-"value": "slideInRight",
-"label": "Slide in right"
-},
-{
-"value": "zoomIn",
-"label": "Zoom in"
-}
-]
-},
-{
-"type": "header",
-"content": "Advanced",
-"info": "[Learn more](https://help.outofthesandbox.com/hc/en-us/articles/360022329373)"
-},
+      "type": "range",
+      "id": "pagination_limit",
+      "label": "Photos per page",
+      "min": 4,
+      "max": 200,
+      "step": 2,
+      "default": 100,
+      "info": "Decrease this if the page is taking to long to load."
+    },
 {
 "type": "text",
-"id": "css_class",
-"label": "CSS Class"
+"id": "target-aspect-ratio",
+"label": "Desired Aspect Ratio",
+            "default": "1.0"
 },
 {
 "type": "textarea",
-"id": "custom_css",
-"label": "Custom CSS"
-}
-],
+"id": "instructions-too-tall",
+"label": "Instructions when image is too tall",
+            "default": "Need to crop top and bottom"
+},
+{
+"type": "textarea",
+"id": "instructions-too-wide",
+"label": "Instructions when image is too wide",
+            "default": "Need to crop sides"
+},
+    // {
+    //   "type": "header",
+    //   "content": "Layout"
+    // },
+    // {
+    //   "type": "select",
+    //   "id": "width",
+    //   "label": "Width",
+    //   "default": "standard",
+    //   "options": [
+    //     {
+    //       "value": "half",
+    //       "label": "Half"
+    //     },
+    //     {
+    //       "value": "standard",
+    //       "label": "Standard"
+    //     },
+    //     {
+    //       "value": "wide",
+    //       "label": "Wide"
+    //     }
+    //   ]
+    // },
+    // {
+    //   "type": "range",
+    //   "id": "padding_top",
+    //   "label": "Top spacing",
+    //   "min": 0,
+    //   "max": 80,
+    //   "default": 20,
+    //   "unit": "px"
+    // },
+    // {
+    //   "type": "range",
+    //   "id": "padding_bottom",
+    //   "label": "Bottom spacing",
+    //   "min": 0,
+    //   "max": 80,
+    //   "default": 0,
+    //   "unit": "px"
+    // },
+    // {
+    //   "type": "range",
+    //   "id": "padding_left",
+    //   "label": "Left spacing",
+    //   "min": 0,
+    //   "max": 80,
+    //   "default": 0,
+    //   "unit": "px"
+    // },
+    // {
+    //   "type": "range",
+    //   "id": "padding_right",
+    //   "label": "Right spacing",
+    //   "default": 0,
+    //   "min": 0,
+    //   "max": 80,
+    //   "unit": "px"
+    // },
+    // {
+    //   "type": "select",
+    //   "id": "animation",
+    //   "label": "Animation",
+    //   "default": "none",
+    //   "options": [
+    //     {
+    //       "value": "none",
+    //       "label": "None"
+    //     },
+    //     {
+    //       "value": "fadeIn",
+    //       "label": "Fade in"
+    //     },
+    //     {
+    //       "value": "fadeInDown",
+    //       "label": "Fade in down"
+    //     },
+    //     {
+    //       "value": "fadeInLeft",
+    //       "label": "Fade in left"
+    //     },
+    //     {
+    //       "value": "fadeInRight",
+    //       "label": "Fade in right"
+    //     },
+    //     {
+    //       "value": "slideInLeft",
+    //       "label": "Slide in left"
+    //     },
+    //     {
+    //       "value": "slideInRight",
+    //       "label": "Slide in right"
+    //     },
+    //     {
+    //       "value": "zoomIn",
+    //       "label": "Zoom in"
+    //     }
+    //   ]
+    // },
+    {
+      "type": "header",
+      "content": "Support",
+      // "info": "[Get support for this section](https://admin.shopify.com/apps/jp-components/Support)"
+      "info": "[Get support for this section](https://admin.shopify.com/apps/flex-theme-sections-staging/Support)"
+    }
+  ],
 
-"presets": [{
-"name": "JP Article photos",
-"category": "JadePuma"
-}]
+  "presets": [ 
+    {
+      "name": "JP Article photos",
+      "category": "JadePuma"
+    }
+  ]
 }
-
 {% endschema %}
